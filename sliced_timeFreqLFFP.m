@@ -55,10 +55,10 @@ tf_mtmconvol = ft_freqanalysis(cfg, data_preprocessed);
     
 % Plot the results
 cfg              = [];
-cfg.baseline     = [-0.5 -0.1];
-cfg.baselinetype = 'absolute';
+cfg.baseline     = [-1 max(trial_lengths)];
+cfg.baselinetype = 'relative';
 cfg.maskstyle    = 'saturation';
-cfg.zlim         = [-2e-27 2e-27];
+%cfg.zlim         = [-2e-27 2e-27];
 cfg.channel = {'channel1'; 'channel2'};
 cfg.interactive  = 'no';
 figure
