@@ -1,13 +1,21 @@
-function joined_cell_array = join_cell_arrays(cell_array1, cell_array2)
+function joined_cell_array = join_cell_arrays(varargin)
+    % Get the number of cell arrays
+    num_arrays = nargin;
+    % Find the length of the cell arrays
+    array_length = 300;
+    
     % Preallocate a new cell array with the joined arrays
-    joined_cell_array = cell(1, 300);
-
-    % Loop through each entry in the two original cell arrays
-    for i = 1:300
-        d1 = cell_array1{i};
-        d2 = cell_array2{i};
-        % Join the current entries from the two cells
-        joined_d = [d1; d2];
+    joined_cell_array = cell(1, array_length);
+    
+    % Loop through each entry in the original cell arrays
+    for i = 1:array_length
+        joined_d = [];
+        for j = 1:num_arrays
+            current_array = varargin{j};
+            d = current_array{i};
+            % Join the current entries from the cell arrays
+            joined_d = [joined_d; d];
+        end
         % Store the joined array in the new cell array
         joined_cell_array{i} = joined_d;
     end
