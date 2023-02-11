@@ -32,9 +32,16 @@ result_cell = cell(1, 300);
     end
 timepoints = result_cell;
 
+
+channelLabels = cell(num_channels, 1); % initialize the cell array
+for i = 1:num_channels
+    channelLabels{i, 1} = ['channel' num2str(i)]; % store the strings in the cell array
+end
+
+
 % Data setup in proper format
 data = [];
-data.label = {'channel1'; 'channel2'; 'channel3'; 'channel4'; 'channel5'; 'channel6'; 'channel7'; 'channel8'; 'channel9'; 'channel10'; 'channel11'; 'channel12'; 'channel13'; 'channel14'; 'channel15'; 'channel16'}; % channel label
+data.label = channelLabels; % channel label
 data.time = timepoints; 
 data.trial = time_series_data; % time series data
 data.fsample = 1000; % sampling frequency
@@ -43,28 +50,45 @@ data.fsample = 1000; % sampling frequency
 
 % TODO: Artifact removal 
 % Perform ICA
+num_components = 10;
+
 cfg = [];
 cfg.method = 'runica'; % ICA method to use, in this case runica
 %running with 10 components, because this subject only has 16 channels
-cfg.numcomponent = 10; % number of components to retain
+cfg.numcomponent = num_components; % number of components to retain
 comp = ft_componentanalysis(cfg, data);
 
 % Calculate the mean variacne of each components spatial distribution
-var_magnitudes = var(abs(comp.topo));
+%var_magnitudes = var(abs(comp.topo));
+
+kl_divergences = zeros(1, num_components); % initialize an array to store the KL divergences
+for i = 1:num_components
+    data = comp.topo(:, i); % extract the data from the i-th column
+    pmf_data = histcounts(data, num_channels, 'Normalization', 'probability'); % estimate the PMF of the data
+    pmf_data(pmf_data == 0) = 0.00001; % add a small positive value to any element equal to 0
+    pmf_uniform = ones(1, num_channels) / num_channels; % PMF of the uniform distribution
+    kl_divergences(i) = sum(pmf_data .* log(pmf_data ./ pmf_uniform)); % calculate the KL divergence
+end
 
 
 threshold = 0.001; % The threshold for what is considered "equal distribution"
-equal_components = find(var_magnitudes < threshold);
+equal_components = find(kl_divergences < 1);
 
 % Display the indices of the equal components
 cfg = [];
 cfg.component = equal_components; % to be removed
 data_clean = ft_rejectcomponent(cfg, comp);
 
+
+
+
+
+
+
 % Perform time-frequency analysis using the mtmconvol method
 cfg = [];
 cfg.output = 'pow';
-cfg.channel = {'channel1'; 'channel2'};
+cfg.channel = channelLabels;
 cfg.method = 'mtmconvol';
 cfg.taper = 'hanning';
 cfg.foi = 2:1:30; %frequency of interest
