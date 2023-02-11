@@ -46,9 +46,58 @@ data.time = timepoints;
 data.trial = time_series_data; % time series data
 data.fsample = 1000; % sampling frequency
 
-% Preprocess the data (e.g. filtering, resampling, etc.)
 
-% TODO: Artifact removal 
+cfg = [];
+cfg.artfctdef.zvalue.channel = channelLabels;
+% channel selection, cutoff and padding
+cfg.artfctdef.zvalue.cutoff = 20;
+cfg.artfctdef.zvalue.trlpadding = 0;
+cfg.artfctdef.zvalue.artpadding = 0;
+cfg.artfctdef.zvalue.fltpadding = 0;
+
+% algorithmic parameters
+cfg.artfctdef.zvalue.cumulative = 'yes';
+cfg.artfctdef.zvalue.medianfilter = 'yes';
+cfg.artfctdef.zvalue.medianfiltord = 9;
+cfg.artfctdef.zvalue.absdiff = 'yes';
+
+% make the process interactive
+cfg.artfctdef.zvalue.interactive = 'yes';
+
+
+[cfg, artifact_jump] = ft_artifact_zvalue(cfg, data);
+
+
+cfg = [];
+cfg.artfctdef.zvalue.channel = channelLabels;
+% channel selection, cutoff and padding
+cfg.artfctdef.zvalue.cutoff       = 4;
+cfg.artfctdef.zvalue.trlpadding   = 0;
+cfg.artfctdef.zvalue.fltpadding   = 0;
+cfg.artfctdef.zvalue.artpadding   = 0.1;
+
+% algorithmic parameters
+cfg.artfctdef.zvalue.bpfilter     = 'yes';
+cfg.artfctdef.zvalue.bpfreq       = [110 140];
+cfg.artfctdef.zvalue.bpfiltord    = 9;
+cfg.artfctdef.zvalue.bpfilttype   = 'but';
+cfg.artfctdef.zvalue.hilbert      = 'yes';
+cfg.artfctdef.zvalue.boxcar       = 0.2;
+
+% make the process interactive
+cfg.artfctdef.zvalue.interactive = 'yes';
+
+[cfg, artifact_muscle] = ft_artifact_zvalue(cfg, data);
+
+
+cfg                           = [];
+cfg.artfctdef.reject          = 'complete'; % this rejects complete trials, use 'partial' if you want to do partial artifact rejection
+cfg.artfctdef.jump.artifact   = artifact_jump;
+cfg.artfctdef.muscle.artifact = artifact_muscle;
+data_no_artifacts = ft_rejectartifact(cfg,data);
+
+
+
 % Perform ICA
 num_components = 10;
 
@@ -56,15 +105,15 @@ cfg = [];
 cfg.method = 'runica'; % ICA method to use, in this case runica
 %running with 10 components, because this subject only has 16 channels
 cfg.numcomponent = num_components; % number of components to retain
-comp = ft_componentanalysis(cfg, data);
+comp = ft_componentanalysis(cfg, data_no_artifacts);
 
 % Calculate the mean variacne of each components spatial distribution
 %var_magnitudes = var(abs(comp.topo));
 
 kl_divergences = zeros(1, num_components); % initialize an array to store the KL divergences
 for i = 1:num_components
-    data = comp.topo(:, i); % extract the data from the i-th column
-    pmf_data = histcounts(data, num_channels, 'Normalization', 'probability'); % estimate the PMF of the data
+    columndata = comp.topo(:, i); % extract the data from the i-th column
+    pmf_data = histcounts(columndata, num_channels, 'Normalization', 'probability'); % estimate the PMF of the data
     pmf_data(pmf_data == 0) = 0.00001; % add a small positive value to any element equal to 0
     pmf_uniform = ones(1, num_channels) / num_channels; % PMF of the uniform distribution
     kl_divergences(i) = sum(pmf_data .* log(pmf_data ./ pmf_uniform)); % calculate the KL divergence
@@ -78,11 +127,6 @@ equal_components = find(kl_divergences < threshold);
 cfg = [];
 cfg.component = equal_components; % to be removed
 data_clean = ft_rejectcomponent(cfg, comp);
-
-
-
-
-
 
 
 % Perform time-frequency analysis using the mtmconvol method
@@ -101,7 +145,7 @@ cfg              = [];
 cfg.baseline     = [-0.5 -0.1];
 cfg.baselinetype = 'relative';
 cfg.maskstyle    = 'saturation';
-cfg.channel = {'channel1'; 'channel2'};
+cfg.channel = channelLabels;
 cfg.interactive  = 'no';
 figure
 ft_singleplotTFR(cfg, tf_mtmconvol);
