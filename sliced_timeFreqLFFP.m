@@ -71,8 +71,8 @@ for i = 1:num_components
 end
 
 
-threshold = 0.001; % The threshold for what is considered "equal distribution"
-equal_components = find(kl_divergences < 1);
+threshold = 1; % The threshold for what is considered "equal distribution"
+equal_components = find(kl_divergences < threshold);
 
 % Display the indices of the equal components
 cfg = [];
