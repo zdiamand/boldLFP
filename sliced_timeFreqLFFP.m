@@ -1,4 +1,3 @@
-
 load('D:\Olab\patientData\extracted\P62CS_041919_lfpLoop.mat');
 
 % addpath 'C:\Users\18133\OneDrive\Documents\MATLAB\fieldtrip-20220707'
@@ -144,8 +143,14 @@ for i = 1:num_components
     kl_divergences(i) = sum(pmf_data .* log(pmf_data ./ pmf_uniform)); % calculate the KL divergence
 end
 
+figure;
+bar(kl_divergences);
+title('KL Divergences for Each Component');
+xlabel('Component');
+ylabel('KL Divergence');
 
-threshold = 1; % The threshold for what is considered "equal distribution"
+
+threshold = 0.6; % The threshold for what is considered "equal distribution"
 equal_components = find(kl_divergences < threshold);
 
 % Display the indices of the equal components
