@@ -1,5 +1,5 @@
 load('D:\Olab\patientData\extracted\P62CS_041919_lfpLoop.mat');
-
+%load('D:\Olab\patientData\extractedNoCut\P62CS_041919_lfpLoopNoCut.mat');
 % addpath 'C:\Users\18133\OneDrive\Documents\MATLAB\fieldtrip-20220707'
 % ft_defaults
 
@@ -68,56 +68,9 @@ cfg.artfctdef.zvalue.interactive = 'yes';
 [cfg, artifact_jump] = ft_artifact_zvalue(cfg, data);
 
 
-cfg = [];
-cfg.artfctdef.zvalue.channel = channelLabels;
-% channel selection, cutoff and padding
-cfg.artfctdef.zvalue.cutoff       = 4;
-cfg.artfctdef.zvalue.trlpadding   = 0;
-cfg.artfctdef.zvalue.fltpadding   = 0;
-cfg.artfctdef.zvalue.artpadding   = 0.1;
-
-% algorithmic parameters
-cfg.artfctdef.zvalue.bpfilter     = 'yes';
-cfg.artfctdef.zvalue.bpfreq       = [110 140];
-cfg.artfctdef.zvalue.bpfiltord    = 9;
-cfg.artfctdef.zvalue.bpfilttype   = 'but';
-cfg.artfctdef.zvalue.hilbert      = 'yes';
-cfg.artfctdef.zvalue.boxcar       = 0.2;
-
-% make the process interactive
-cfg.artfctdef.zvalue.interactive = 'yes';
-
-[cfg, artifact_muscle] = ft_artifact_zvalue(cfg, data);
-
-%cfg = [];
-%cfg.artfctdef.zvalue.channel = channelLabels;
-%cfg.artfctdef.zvalue.cutoff      = 4;
-%cfg.artfctdef.zvalue.trlpadding  = 0;
-%cfg.artfctdef.zvalue.artpadding  = 0.1;
-%cfg.artfctdef.zvalue.fltpadding  = 0;
-
-% algorithmic parameters
-%cfg.artfctdef.zvalue.bpfilter   = 'yes';
-%cfg.artfctdef.zvalue.bpfilttype = 'but';
-%cfg.artfctdef.zvalue.bpfreq     = [2 15];
-%cfg.artfctdef.zvalue.bpfiltord  = 4;
-%cfg.artfctdef.zvalue.hilbert    = 'yes';
-
-% feedback
-%cfg.artfctdef.zvalue.interactive = 'yes';
-
-%[cfg, artifact_eog] = ft_artifact_zvalue(cfg, data);
-
-
-
-
-
-
 cfg                           = [];
 cfg.artfctdef.reject          = 'complete'; % this rejects complete trials, use 'partial' if you want to do partial artifact rejection
 cfg.artfctdef.jump.artifact   = artifact_jump;
-cfg.artfctdef.muscle.artifact = artifact_muscle;
-%cfg.artfctdef.eog.artifact    = artifact_eog;
 data_no_artifacts = ft_rejectartifact(cfg,data);
 
 
