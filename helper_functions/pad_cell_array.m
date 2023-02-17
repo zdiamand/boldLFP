@@ -1,12 +1,11 @@
-function padded_cell_array = pad_cell_array(cell_array)
+function padded_cell_array = pad_cell_array(cell_array,nTrials)
     % Define the max length of the double arrays
-    max_len = max(cellfun(@length, cell_array));
-
+    max_len = max(cellfun(@length, cell_array));    
     % Preallocate a new cell array with the padded arrays
-    padded_cell_array = cell(1, 300);
+    padded_cell_array = cell(1, nTrials);
 
     % Loop through each entry in the original cell array
-    for i = 1:300
+    for i = 1:nTrials
         d = cell_array{i};
         % Check if d is a 1 by d or d by 1 array
         if size(d, 1) == 1

@@ -2,7 +2,7 @@ function joined_cell_array = join_cell_arrays(varargin)
     % Get the number of cell arrays
     num_arrays = nargin;
     % Find the length of the cell arrays
-    array_length = 300;
+    array_length = length(varargin{1});
     
     % Preallocate a new cell array with the joined arrays
     joined_cell_array = cell(1, array_length);
