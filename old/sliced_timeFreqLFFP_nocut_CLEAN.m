@@ -3,8 +3,6 @@
 % ft_defaults
 
 load('D:\Olab\patientData\extractedNoCut\P62CS_041919_lfpLoopNoCut.mat');
-%load('D:\Olab\patientData\extractedNoCut\P61CS_022119_lfpLoopNoCut.mat');
-
 
 % Define a cell array to store the data for each channel
 num_channels = length(dat);
@@ -44,33 +42,33 @@ data.trial = time_series_data_matrix2; % time series data
 data.fsample = 1000; % sampling frequency
 
 
-%cfg = [];
-%cfg.artfctdef.zvalue.channel = channelLabels;
+cfg = [];
+cfg.artfctdef.zvalue.channel = channelLabels;
 % channel selection, cutoff and padding
-%cfg.artfctdef.zvalue.cutoff = 20;
-%cfg.artfctdef.zvalue.trlpadding = 0;
-%cfg.artfctdef.zvalue.artpadding = 0;
-%cfg.artfctdef.zvalue.fltpadding = 0;
+cfg.artfctdef.zvalue.cutoff = 20;
+cfg.artfctdef.zvalue.trlpadding = 0;
+cfg.artfctdef.zvalue.artpadding = 0;
+cfg.artfctdef.zvalue.fltpadding = 0;
 
 % algorithmic parameters
-%cfg.artfctdef.zvalue.cumulative = 'yes';
-%cfg.artfctdef.zvalue.medianfilter = 'yes';
-%cfg.artfctdef.zvalue.medianfiltord = 9;
-%cfg.artfctdef.zvalue.absdiff = 'yes';
+cfg.artfctdef.zvalue.cumulative = 'yes';
+cfg.artfctdef.zvalue.medianfilter = 'yes';
+cfg.artfctdef.zvalue.medianfiltord = 9;
+cfg.artfctdef.zvalue.absdiff = 'yes';
 
 % make the process interactive
-%cfg.artfctdef.zvalue.interactive = 'yes';
+cfg.artfctdef.zvalue.interactive = 'yes';
 
 
-%[cfg, artifact_jump] = ft_artifact_zvalue(cfg, data);
+[cfg, artifact_jump] = ft_artifact_zvalue(cfg, data);
 
 
-%cfg                           = [];
-%cfg.artfctdef.reject          = 'partial'; % this rejects complete trials, use 'partial' if you want to do partial artifact rejection
-%cfg.artfctdef.jump.artifact   = artifact_jump;
-%data_no_artifacts = ft_rejectartifact(cfg,data);
+cfg                           = [];
+cfg.artfctdef.reject          = 'partial'; % this rejects complete trials, use 'partial' if you want to do partial artifact rejection
+cfg.artfctdef.jump.artifact   = artifact_jump;
+data_no_artifacts = ft_rejectartifact(cfg,data);
 
-data_no_artifacts = data;
+
 
 % Perform ICA
 num_components = 10;
@@ -97,7 +95,7 @@ xlabel('Component');
 ylabel('KL Divergence');
 
 
-threshold = 0.6; %0.6 The threshold for what is considered "equal distribution"
+threshold = 0.8; % The threshold for what is considered "equal distribution"
 equal_components = find(kl_divergences < threshold);
 
 % Display the indices of the equal components
@@ -107,27 +105,13 @@ data_clean = ft_rejectcomponent(cfg, comp);
 
 
 % Perform time-frequency analysis using the mtmconvol method
-%cfg = [];
-%cfg.output = 'pow';
-%cfg.channel = channelLabels;
-%cfg.method = 'mtmconvol';
-%cfg.taper = 'hanning';
-%cfg.foi = 2:1:30; %frequency of interest
-%cfg.t_ftimwin = 7./cfg.foi;  % 7 cycles per time window %NEED TO CHANGE
-%cfg.toi = min(cell2mat(timepoints)):0.05:max(cell2mat(timepoints));
-%tf_mtmconvol = ft_freqanalysis(cfg, data_clean);
-
-
-
 cfg = [];
 cfg.output = 'pow';
 cfg.channel = channelLabels;
 cfg.method = 'mtmconvol';
-cfg.taper = 'dpss';
-cfg.foi = 2:2:150; %frequency of interest
-cfg.tapsmofrq  = 0.3 *cfg.foi; %0.5?
-cfg.pad='nextpow2';
-cfg.t_ftimwin = 7./cfg.foi;
+cfg.taper = 'hanning';
+cfg.foi = 2:1:30; %frequency of interest
+cfg.t_ftimwin = 7./cfg.foi;  % 7 cycles per time window %NEED TO CHANGE
 cfg.toi = min(cell2mat(timepoints)):0.05:max(cell2mat(timepoints));
 tf_mtmconvol = ft_freqanalysis(cfg, data_clean);
 
@@ -135,13 +119,9 @@ tf_mtmconvol = ft_freqanalysis(cfg, data_clean);
 
 % Load sliced version of data to extract the trial start and end times for
 % each trial 
-%load('D:\Olab\patientData\extracted\P62CS_041919_lfpLoop.mat');
-load('D:\Olab\patientData\extracted\P62CS_041919_lfpLoop_outcome.mat');
-%trialStartTTLs = dat{1}.trialStartTTLs / 10^6;
-%trialEndTTLs = dat{1}.trialEndTTLs / 10^6;
-trialOutcomeTTLs = dat{1}.trialOutcomeTTLs / 10^6;
-trialStartTTLs = trialOutcomeTTLs - 3;
-trialEndTTLs = trialOutcomeTTLs + 3;
+load('D:\Olab\patientData\extracted\P62CS_041919_lfpLoop.mat');
+trialStartTTLs = dat{1}.trialStartTTLs / 10^6;
+trialEndTTLs = dat{1}.trialEndTTLs / 10^6;
 trialLengths = trialEndTTLs - trialStartTTLs;
 numTrials = length(trialStartTTLs);
 trialData = cell(1, numTrials);
@@ -156,25 +136,16 @@ for i = 1:numTrials
 end
 
 % Shift the timepoints so they are from -1 to end of trial
-%result_cell = cell(1, length(time_trials));
-%    for i = 1:length(time_trials)
-%    d = time_trials{i};
-%    result_cell{i} = shift_timepoints(d);
-%    end
-%timepoints = result_cell;
-
-% Shift the timepoints so they are from -3 to 3 (0 is outcome) 
-result_cell = cell(1, dat{1}.nTrials);
-offset = -3; % (to shift intervals starting from -3)
-for i = 1:dat{1}.nTrials
+result_cell = cell(1, length(time_trials));
+    for i = 1:length(time_trials)
     d = time_trials{i};
-    result_cell{i} = shift_timepoints(d,offset);
-end
+    result_cell{i} = shift_timepoints(d);
+    end
 timepoints = result_cell;
+
 
 % Put each trial's data into correct data structure
 nTrials = numel(trialData);
-nTrials = nTrials -1;
 freq = cell(1, nTrials);
 for i = 1:nTrials
     freq{i}.powspctrm = cell2mat(trialData(i));
@@ -198,13 +169,9 @@ ft_singleplotTFR(cfg, zz);
 % Plot the results with baseline correction
 cfg              = [];
 cfg.baseline     = [-0.5 -0.1];
-%cfg.baseline     = [-1.5 -1];
-cfg.xlim = [-2,2];
 cfg.baselinetype = 'relative';
 cfg.maskstyle    = 'saturation';
 cfg.channel = channelLabels;
 cfg.interactive  = 'no';
 figure
 ft_singleplotTFR(cfg, zz);
-xlabel('Time from outcome (s)')
-ylabel('Frequency (Hz)')
